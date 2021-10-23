@@ -4,9 +4,10 @@
 
 pragma solidity ^0.8.6;
 
-library LibPinball {
+library LibPinballHevm {
     struct State {
-        bytes ball;
+        //bytes ball;
+		bytes1[512] ball;
 
         uint commandsOffset;
         uint commandsLength;
@@ -26,9 +27,11 @@ library LibPinball {
 
 	event Init(uint offset, uint length);
 
-    function init(State memory state, bytes memory ball) internal returns (bool) {
+    //function init(State memory state, bytes memory ball) internal pure returns (bool) {
+    function init(State memory state, bytes1[512] memory ball) internal returns (bool) {
+
         if (ball.length != 512) return false;
-        
+
         if (ball[0] != 'P' || ball[1] != 'C' || ball[2] != 'T' || ball[3] != 'F') return false;
 
         state.ball = ball;
@@ -48,19 +51,59 @@ library LibPinball {
     }
 
     function readUint8At(State memory state, uint dataOffset) internal pure returns (uint8 result) {
-        assembly { result := mload(add(add(mload(state), 1), dataOffset)) }
+        //assembly { result := mload(add(add(mload(state), 1), dataOffset)) }
+		result = uint8(state.ball[dataOffset]);
     }
 
     function readUint16At(State memory state, uint dataOffset) internal pure returns (uint16 result) {
-        assembly { result := mload(add(add(mload(state), 2), dataOffset)) }
+        //assembly { result := mload(add(add(mload(state), 2), dataOffset)) }
+		uint16 low = uint16(uint8(state.ball[dataOffset + 1]));
+		uint16 high = uint16(uint8(state.ball[dataOffset]));
+		result = low | (high << 8);
     }
 
     function readBytes4At(State memory state, uint dataOffset) internal pure returns (bytes4 result) {
-        assembly { result := mload(add(add(mload(state), 0x20), dataOffset)) }
+        //assembly { result := mload(add(add(mload(state), 0x20), dataOffset)) }
+		result = bytes4(state.ball[dataOffset]);
+		result |= bytes4(state.ball[dataOffset + 1]) >> 8;
+		result |= bytes4(state.ball[dataOffset + 2]) >> 16;
+		result |= bytes4(state.ball[dataOffset + 3]) >> 24;
     }
 
     function readBytes32At(State memory state, uint dataOffset) internal pure returns (bytes32 result) {
-        assembly { result := mload(add(add(mload(state), 0x20), dataOffset)) }
+        //assembly { result := mload(add(add(mload(state), 0x20), dataOffset)) }
+		result = bytes32(state.ball[dataOffset]);
+		result |= bytes32(state.ball[dataOffset + 1]) >> 8;
+		result |= bytes32(state.ball[dataOffset + 2]) >> 16;
+		result |= bytes32(state.ball[dataOffset + 3]) >> 24;
+		result |= bytes32(state.ball[dataOffset + 4]) >> 32;
+		result |= bytes32(state.ball[dataOffset + 5]) >> 40;
+		result |= bytes32(state.ball[dataOffset + 6]) >> 48;
+		result |= bytes32(state.ball[dataOffset + 7]) >> 56;
+		result |= bytes32(state.ball[dataOffset + 8]) >> 64;
+		result |= bytes32(state.ball[dataOffset + 9]) >> 72;
+		result |= bytes32(state.ball[dataOffset + 10]) >> 80;
+		result |= bytes32(state.ball[dataOffset + 11]) >> 88;
+		result |= bytes32(state.ball[dataOffset + 12]) >> 96;
+		result |= bytes32(state.ball[dataOffset + 13]) >> 104;
+		result |= bytes32(state.ball[dataOffset + 14]) >> 112;
+		result |= bytes32(state.ball[dataOffset + 15]) >> 120;
+		result |= bytes32(state.ball[dataOffset + 16]) >> 128;
+		result |= bytes32(state.ball[dataOffset + 17]) >> 136;
+		result |= bytes32(state.ball[dataOffset + 18]) >> 144;
+		result |= bytes32(state.ball[dataOffset + 19]) >> 152;
+		result |= bytes32(state.ball[dataOffset + 20]) >> 160;
+		result |= bytes32(state.ball[dataOffset + 21]) >> 168;
+		result |= bytes32(state.ball[dataOffset + 22]) >> 176;
+		result |= bytes32(state.ball[dataOffset + 23]) >> 184;
+		result |= bytes32(state.ball[dataOffset + 24]) >> 192;
+		result |= bytes32(state.ball[dataOffset + 25]) >> 200;
+		result |= bytes32(state.ball[dataOffset + 26]) >> 208;
+		result |= bytes32(state.ball[dataOffset + 27]) >> 216;
+		result |= bytes32(state.ball[dataOffset + 28]) >> 224;
+		result |= bytes32(state.ball[dataOffset + 29]) >> 232;
+		result |= bytes32(state.ball[dataOffset + 30]) >> 240;
+		result |= bytes32(state.ball[dataOffset + 31]) >> 248;
     }
 
     function readRand(State memory state) internal pure returns (uint16) {
@@ -74,12 +117,14 @@ library LibPinball {
     }
 }
 
-contract Pinball {
-    using LibPinball for LibPinball.State;
+contract PinballHevm {
+    using LibPinballHevm for LibPinballHevm.State;
 
     event Message(string message);
     event NewScore(uint id, address indexed who, uint score);
 
+	// Not important for score computation.
+	/*
     struct Submission {
         address who;
         uint time;
@@ -99,40 +144,50 @@ contract Pinball {
     function insertCoins(bytes32 commitment) external {
         commitments[makeCommitmentHash(commitment, block.number)] = true;
     }
+	*/
 
-	event Ticks(uint ticks);
+    function play(bytes1[512] memory ball, uint blockNumber) external {
+		// Not important for score computation.
+		/*
+        bytes32 commitment = makeCommitmentHash(keccak256(ball), blockNumber);
+        require(commitments[commitment], "you didn't insert any coins");
+        require(block.number - blockNumber > 4, "please wait a bit after you insert your coins");
 
-    function play(bytes memory ball, uint blockNumber) external {
-		// Commented these for now just to get the `ball` score tests through.
-        //bytes32 commitment = makeCommitmentHash(keccak256(ball), blockNumber);
-        //require(commitments[commitment], "you didn't insert any coins");
-        //require(block.number - blockNumber > 4, "please wait a bit after you insert your coins");
+        delete commitments[commitment];
+		*/
 
-        //delete commitments[commitment];
-
-        LibPinball.State memory state;
+        LibPinballHevm.State memory state;
         require(state.init(ball), "invalid ball");
 
-		uint i = 0;
-        for (; i < state.commandsLength; i++) {
+        for (uint i = 0; i < state.commandsLength; i++) {
             if (!tick(state, i)) break;
 
             state.bonusScore += 50;
         }
-		emit Ticks(i);
 
         uint finalScore = state.baseScore * state.scoreMultiplier + state.bonusScore;
 
+		// We want to ask hevm to find a counterexample to this,
+		// that is, giving us a calldata that will score >=50000.
+		// You might want to remove when testing concrete scores
+		// higher than this.
+		assert(finalScore < 50000);
+
+		// Not important for score computation.
+		/*
         Submission memory submission = Submission({who: msg.sender, time: block.number, score: finalScore});
         if (submission.score > bestSubmission.score) {
             bestSubmission = submission;
         }
 
-        emit NewScore(submissions.length, msg.sender, finalScore);
+		*/
+        emit NewScore(0, msg.sender, finalScore);
+		/*
         submissions.push(submission);
+		*/
     }
 
-    function tick(LibPinball.State memory state, uint commandNum) private returns (bool) {
+    function tick(LibPinballHevm.State memory state, uint commandNum) private returns (bool) {
         uint commandOffset = state.commandsOffset + commandNum * 5;
 
         uint8 command = state.readUint8At(commandOffset);
@@ -160,7 +215,7 @@ contract Pinball {
         return false;
     }
 
-    function pull(LibPinball.State memory state) private returns (bool) {
+    function pull(LibPinballHevm.State memory state) private returns (bool) {
         if (state.location != 0x42424242) return false;
 
         state.location = state.readRand() % 100;
@@ -170,7 +225,7 @@ contract Pinball {
         return true;
     }
 
-    function tilt(LibPinball.State memory state, uint16 dataOff) private returns (bool) {
+    function tilt(LibPinballHevm.State memory state, uint16 dataOff) private returns (bool) {
         if (state.location >= 100) return false;
 
         uint tiltSpend = state.readUint8At(dataOff);
@@ -205,7 +260,7 @@ contract Pinball {
         return true;
     }
 
-    function flipLeft(LibPinball.State memory state, uint16 dataOff, uint16 dataLen) private returns (bool) {
+    function flipLeft(LibPinballHevm.State memory state, uint16 dataOff, uint16 dataLen) private returns (bool) {
         if (state.location >= 100) {
             return false;
         }
@@ -310,7 +365,7 @@ contract Pinball {
         return true;
     }
 
-    function flipRight(LibPinball.State memory state, uint16 dataOff) private returns (bool) {
+    function flipRight(LibPinballHevm.State memory state, uint16 dataOff) private returns (bool) {
         if (state.location >= 100) return false;
 
         if (state.location >= 33 && state.location < 66) {
