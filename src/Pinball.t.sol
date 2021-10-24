@@ -73,7 +73,6 @@ contract PinballHevmTest is DSTest, Scores {
 	// PinballHevm::play
 	// The input is fully symbolic now, but we could already constrain it a bit
 	// here by adding PCTF at the start and other constraints on specific indices.
-	/*
 	function prove_high_score_letsgo(uint8[255] memory ball0, uint8[255] memory ball1, uint8[2] memory ball2) public {
 		bytes1[512] memory ball;
 		for (uint i = 0; i < 255; ++i)
@@ -84,7 +83,6 @@ contract PinballHevmTest is DSTest, Scores {
 		ball[511] = bytes1(ball2[1]);
 		pb.play(ball, 0);
 	}
-	*/
 
 	function bytes32To1(bytes32[16] memory ball) internal pure returns (bytes1[512] memory result) {
 		for (uint i = 0; i < 512; ++i)

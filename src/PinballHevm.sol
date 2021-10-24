@@ -157,7 +157,9 @@ contract PinballHevm {
 		*/
 
         LibPinballHevm.State memory state;
-        require(state.init(ball), "invalid ball");
+        //require(state.init(ball), "invalid ball");
+		if (!state.init(ball))
+			return;
 
         for (uint i = 0; i < state.commandsLength; i++) {
             if (!tick(state, i)) break;
@@ -171,7 +173,8 @@ contract PinballHevm {
 		// that is, giving us a calldata that will score >=50000.
 		// You might want to remove when testing concrete scores
 		// higher than this.
-		assert(finalScore < 50000);
+		//assert(finalScore < 50000);
+		assert(finalScore == 0);
 
 		// Not important for score computation.
 		/*
